@@ -1,0 +1,21 @@
+/* app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0d0f14;
+  --surface: #1e2330;
+  --accent: #00d4aa;
+}
+
+body {
+  background: var(--bg);
+  color: #e8eaf0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #13161d; }
+::-webkit-scrollbar-thumb { background: #252b3b; border-radius: 3px; }
