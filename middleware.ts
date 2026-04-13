@@ -1,6 +1,6 @@
 // middleware.ts
 // Intercepta /api/scrape para usuarios no autenticados
-// Verifica el límite de uso antes de llegar al handler
+// Verifica el límite de uso antes de llegar al handler 
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
