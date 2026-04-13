@@ -6,7 +6,7 @@ import type { ScrapeResult, ScrapingMethod, ExportFormat } from '@/types'
 
 const METHODS: { value: ScrapingMethod; label: string; desc: string }[] = [
   { value: 'hybrid', label: '🔄 Hybrid (recomendado)', desc: 'fetch → browserless → gemini' },
-  { value: 'fetch',  label: '⚡ Fetch + Parser',      desc: 'Rápido, sin JS' },
+  { value: 'fetch-light', label: '⚡ Fetch + Parser', desc: 'Rápido, sin JS' },
   { value: 'browserless', label: '🌐 Browserless',   desc: 'JS completo + XHR' },
   { value: 'gemini', label: '✨ Gemini AI',           desc: 'Screenshot + IA' },
 ]
