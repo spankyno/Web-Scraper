@@ -49,7 +49,7 @@ function parsePrice(raw: string): number | null {
   return isNaN(n) ? null : n
 }
 
-function detectStock($: cheerio.CheerioAPI, selector?: string): boolean {
+function detectStock($: ReturnType<typeof cheerio.load>, selector?: string): boolean {
   if (selector) {
     const text = $(selector).text().toLowerCase()
     return !text.includes('agotado') && !text.includes('sin stock') && !text.includes('out of stock')
@@ -138,7 +138,7 @@ export async function fetchParser(
   return {
     success: true,
     url,
-    method: 'fetch',
+    method: 'fetch-light',
     data,
     price,
     inStock,
