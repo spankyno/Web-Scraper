@@ -11,7 +11,7 @@ export async function scrape(req: ScrapeRequest): Promise<ScrapeResult> {
   const { url, method = 'hybrid', selector, aiInstruction } = req
 
   switch (method) {
-    case 'fetch':
+    case 'fetch-light':
       return fetchParser(url, selector)
 
     case 'browserless':
@@ -98,5 +98,5 @@ export function suggestMethod(url: string): ScrapingMethod {
     return 'browserless'
   }
 
-  return 'fetch'
+  return 'fetch-light'
 }
