@@ -176,14 +176,14 @@ export default function HomePage() {
           ))}
 
           <div style={{ fontSize: 10, color: '#555c6e', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '12px 12px 4px', marginTop: 8 }}>Cuenta</div>
-          <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, color: '#8b909e', fontSize: 13, textDecoration: 'none' }}>
+          <a href="/settings" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, color: '#8b909e', fontSize: 13, textDecoration: 'none' }}>
             <span style={{ fontSize: 15, width: 18, textAlign: 'center' }}>⚙</span> Configuración
           </a>
         </nav>
 
         {/* Footer user */}
         <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <a href="/login" style={{
+          <a href="/settings" style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
             borderRadius: 8, textDecoration: 'none', cursor: 'pointer',
           }}>
