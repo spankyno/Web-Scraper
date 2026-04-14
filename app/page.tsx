@@ -3,6 +3,7 @@
 
 import { useState, useRef } from 'react'
 import type { ScrapingMethod, ExportFormat } from '@/types'
+import AddMonitorModal from '@/components/AddMonitorModal'
 
 // ── Tipos locales ─────────────────────────────────────────────
 interface ScrapeResponse {
@@ -76,6 +77,7 @@ export default function HomePage() {
   const [error,         setError]         = useState('')
   const [jobId,         setJobId]         = useState<string | null>(null)
   const [activeNav,     setActiveNav]     = useState('extract')
+  const [modalOpen,     setModalOpen]     = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const selectedMethod = METHODS.find(m => m.value === method)!
@@ -119,6 +121,18 @@ export default function HomePage() {
   }
 
   const confidence = result?.price != null ? (result.method === 'gemini' ? 85 : result.method === 'browserless' ? 92 : 78) : 0
+
+  async function handleSaveMonitor(data: Record<string, unknown>) {
+    const res = await fetch('/api/monitor', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(data),
+    })
+    if (!res.ok) {
+      const json = await res.json()
+      throw new Error(json.error ?? 'Error al guardar')
+    }
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
@@ -410,11 +424,12 @@ export default function HomePage() {
                   <span style={{ fontSize: 11, color: '#555c6e', alignSelf: 'center' }}>
                     {result.url.length > 40 ? result.url.slice(0, 40) + '…' : result.url}
                   </span>
-                  <a href="/dashboard"
-                    style={{ ...css.btn('#00d4aa'), fontSize: 12, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    style={{ ...css.btn('#00d4aa'), fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 5 }}
                   >
                     📡 Monitorizar
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>
@@ -443,6 +458,16 @@ export default function HomePage() {
 
         </div>
       </main>
+
+      {/* Modal de monitorización — abre con datos del resultado actual */}
+      <AddMonitorModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveMonitor as never}
+        initialUrl={result?.url ?? ''}
+        initialTitle={result?.productName ?? ''}
+        editItem={null}
+      />
     </div>
   )
 }
