@@ -272,30 +272,28 @@ export default function MonitorCard({ item, history, onToggle, onDelete, onCheck
             <ConfidenceBar value={item.price_confidence} />
           </div>
         )}
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: '#555c6e' }}>
-            ⏱ {item.check_interval ?? '1h'}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Frecuencia destacada */}
+          <span style={{
+            fontSize: 11, fontWeight: 600,
+            padding: '2px 8px', borderRadius: 20,
+            background: 'rgba(0,212,170,0.08)',
+            color: '#00d4aa',
+            border: '1px solid rgba(0,212,170,0.2)',
+          }}>
+            ⏱ {formatInterval(item.check_interval ?? '24h')}
           </span>
           <span style={{ fontSize: 11, color: '#555c6e' }}>
             🕐 {relativeTime(item.last_checked ?? item.lastchecked ?? item.created_at)}
           </span>
-          {item.threshold > 0 && (
-            <span style={{ fontSize: 11, color: '#555c6e' }}>
-              🎯 {item.threshold}%
-            </span>
-          )}
-          {item.alert_price != null && (
-            <span style={{ fontSize: 11, color: '#555c6e' }}>
-              🏷 objetivo {formatPrice(item.alert_price, currency)}
-            </span>
-          )}
           <span style={{ fontSize: 11, color: '#555c6e' }}>
             {methodLabel(item.method)}
           </span>
           {item.notification_channel && item.notification_channel !== 'none' && (
             <span style={{ fontSize: 11, color: '#555c6e' }}>
-              {item.notification_channel === 'telegram' ? '📱' :
-               item.notification_channel === 'email' ? '📧' : '📱📧'}
+              {item.notification_channel === 'telegram' ? '📱 TG'
+               : item.notification_channel === 'email' ? '📧 Email'
+               : '📱📧 Ambos'}
             </span>
           )}
         </div>
