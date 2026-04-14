@@ -55,7 +55,7 @@ CRON_SECRET=tu_token_secreto_para_proteger_el_endpoint
 
 ---
 
-## Estructura de archivos
+## Estructura de archivos 
 
 ```
 webscraper-pro/
