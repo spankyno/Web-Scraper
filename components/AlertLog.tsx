@@ -56,45 +56,49 @@ function ConfidenceDot({ value }: { value: number | null }) {
 }
 
 export default function AlertLog() {
-  const [jobs, setJobs] = useState<AlertEntry[]>([])
+  const [jobs,    setJobs]    = useState<AlertEntry[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'ok' | 'error'>('all')
-  const [page, setPage] = useState(0)
+  const [filter,  setFilter]  = useState<'all' | 'ok' | 'error'>('all')
+  const [page,    setPage]    = useState(0)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const PAGE_SIZE = 10
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true)
-      const res = await fetch('/api/jobs')
-      if (res.ok) {
-        const { jobs: raw } = await res.json() as { jobs: ScrapeJob[] }
-        setJobs((raw ?? []).map(parseJob))
-      }
-      setLoading(false)
+  async function load() {
+    setLoading(true)
+    const res = await fetch('/api/jobs')
+    if (res.ok) {
+      const { jobs: raw } = await res.json() as { jobs: ScrapeJob[] }
+      setJobs((raw ?? []).map(parseJob))
     }
-    load()
-  }, [])
+    setLoading(false)
+  }
 
-  const filtered = jobs.filter(j => {
-    if (filter === 'ok') return !j.error
-    if (filter === 'error') return !!j.error
-    return true
-  })
+  useEffect(() => { load() }, [])
 
-  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  async function deleteOne(id: string) {
+    setDeleting(id)
+    await fetch(`/api/jobs?id=${id}`, { method: 'DELETE' })
+    setJobs(prev => prev.filter(j => j.id !== id))
+    setDeleting(null)
+  }
+
+  async function deleteAll() {
+    if (!confirm('¿Eliminar todo el historial? Esta acción no se puede deshacer.')) return
+    setLoading(true)
+    await fetch('/api/jobs?all=1', { method: 'DELETE' })
+    setJobs([])
+    setLoading(false)
+  }
+
+  const filtered   = jobs.filter(j => filter === 'ok' ? !j.error : filter === 'error' ? !!j.error : true)
+  const paginated  = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-
-  // Stats resumen
-  const total = jobs.length
-  const errors = jobs.filter(j => j.error).length
+  const total      = jobs.length
+  const errors     = jobs.filter(j => j.error).length
   const avgDuration = jobs.reduce((s, j) => s + (j.duration ?? 0), 0) / (jobs.length || 1)
 
   if (loading) {
-    return (
-      <div style={{ padding: 40, textAlign: 'center', color: '#555c6e', fontSize: 13 }}>
-        Cargando historial…
-      </div>
-    )
+    return <div style={{ padding: 40, textAlign: 'center', color: '#555c6e', fontSize: 13 }}>Cargando historial…</div>
   }
 
   return (
@@ -123,11 +127,9 @@ export default function AlertLog() {
       </div>
 
       {/* Filtros */}
-      <div style={{ display: 'flex', gap: 6 }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         {(['all', 'ok', 'error'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => { setFilter(f); setPage(0) }}
+          <button key={f} onClick={() => { setFilter(f); setPage(0) }}
             style={{
               padding: '5px 14px', borderRadius: 20, fontSize: 12,
               fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
@@ -139,31 +141,28 @@ export default function AlertLog() {
             {{ all: 'Todos', ok: '✓ Exitosos', error: '✕ Errores' }[f]}
           </button>
         ))}
-        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#555c6e', alignSelf: 'center' }}>
+        <span style={{ marginLeft: 'auto', fontSize: 12, color: '#555c6e' }}>
           {filtered.length} registros
         </span>
+        {jobs.length > 0 && (
+          <button onClick={deleteAll}
+            style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', background: 'rgba(255,77,109,0.08)', color: '#ff6b87', border: '1px solid rgba(255,77,109,0.2)' }}>
+            🗑 Limpiar todo
+          </button>
+        )}
       </div>
 
       {/* Tabla de jobs */}
-      <div style={{
-        background: '#1e2330',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 14, overflow: 'hidden',
-      }}>
+      <div style={{ background: '#1e2330', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden' }}>
         {/* Header */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 80px 60px 70px',
-          padding: '10px 16px',
-          background: '#0d0f14',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          gap: 8,
+          gridTemplateColumns: '2fr 1fr 1fr 80px 60px 70px 32px',
+          padding: '10px 16px', background: '#0d0f14',
+          borderBottom: '1px solid rgba(255,255,255,0.07)', gap: 8,
         }}>
-          {['URL', 'Precio', 'Método', 'Duración', 'Stock', 'Fecha'].map(h => (
-            <span key={h} style={{
-              fontSize: 10, color: '#555c6e',
-              textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 500,
-            }}>
+          {['URL', 'Precio', 'Método', 'Duración', 'Stock', 'Fecha', ''].map(h => (
+            <span key={h} style={{ fontSize: 10, color: '#555c6e', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 500 }}>
               {h}
             </span>
           ))}
@@ -175,17 +174,12 @@ export default function AlertLog() {
           </div>
         ) : (
           paginated.map((job, i) => (
-            <div
-              key={job.id}
+            <div key={job.id}
               style={{
                 display: 'grid',
-                gridTemplateColumns: '2fr 1fr 1fr 80px 60px 70px',
-                padding: '10px 16px',
-                gap: 8,
-                alignItems: 'center',
-                borderBottom: i < paginated.length - 1
-                  ? '1px solid rgba(255,255,255,0.04)'
-                  : 'none',
+                gridTemplateColumns: '2fr 1fr 1fr 80px 60px 70px 32px',
+                padding: '10px 16px', gap: 8, alignItems: 'center',
+                borderBottom: i < paginated.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                 background: job.error ? 'rgba(255,77,109,0.03)' : 'transparent',
                 transition: 'background 0.1s',
               }}
@@ -250,6 +244,23 @@ export default function AlertLog() {
               <span style={{ fontSize: 10, color: '#555c6e', whiteSpace: 'nowrap' }}>
                 {relativeTime(job.createdAt)}
               </span>
+
+              {/* Eliminar */}
+              <button
+                onClick={() => deleteOne(job.id)}
+                disabled={deleting === job.id}
+                title="Eliminar registro"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: '#555c6e', fontSize: 13, padding: '2px 4px',
+                  borderRadius: 4, transition: 'color 0.15s',
+                  opacity: deleting === job.id ? 0.4 : 1,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#ff6b87')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#555c6e')}
+              >
+                ✕
+              </button>
             </div>
           ))
         )}
