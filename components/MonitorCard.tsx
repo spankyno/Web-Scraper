@@ -7,6 +7,7 @@ import {
   formatPrice, priceDiffPercent, formatPct,
   relativeTime, getEffectivePrice, getEffectivePrev,
   getEffectiveActive, statusConfig, methodLabel, confidenceColor,
+  formatInterval,
 } from '@/lib/format'
 
 interface Props {
