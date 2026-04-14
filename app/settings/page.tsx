@@ -2,9 +2,8 @@
 'use client'
 
 export const dynamic = 'force-dynamic'
-
 import { useState, useEffect } from 'react'
-import { useSession, SessionProvider } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 
 const inputStyle: React.CSSProperties = {
   width: '100%', background: '#0d1117',
@@ -37,9 +36,8 @@ const INTERVALS = [
   { value: '48h', label: 'Cada 2 días' },
 ]
 
-function SettingsContent() {
-  const sessionData = useSession()
-  const session = sessionData?.data
+export default function SettingsPage() {
+  const { data: session } = useSession()
   const [saving,   setSaving]   = useState(false)
   const [saved,    setSaved]    = useState('')
   const [testing,  setTesting]  = useState(false)
@@ -58,15 +56,25 @@ function SettingsContent() {
   const [passError,   setPassError]   = useState('')
   const [passSaved,   setPassSaved]   = useState(false)
 
-  // Cargar config guardada en localStorage (simple, sin tabla extra)
+  // Cargar config: primero Supabase (fuente de verdad), luego localStorage para prefs locales
   useEffect(() => {
+    // Prefs locales (intervalo y canal no se guardan en Supabase)
     try {
-      const saved = JSON.parse(localStorage.getItem('ws_settings') ?? '{}')
-      if (saved.telegramChatId)  setTelegramChatId(saved.telegramChatId)
-      if (saved.defaultInterval) setDefaultInterval(saved.defaultInterval)
-      if (saved.defaultChannel)  setDefaultChannel(saved.defaultChannel)
-      if (saved.emailNotif)      setEmailNotif(saved.emailNotif)
+      const local = JSON.parse(localStorage.getItem('ws_settings') ?? '{}')
+      if (local.defaultInterval) setDefaultInterval(local.defaultInterval)
+      if (local.defaultChannel)  setDefaultChannel(local.defaultChannel)
     } catch {}
+
+    // Telegram y email desde Supabase
+    fetch('/api/profile')
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (json?.profile) {
+          if (json.profile.telegram_chat_id) setTelegramChatId(json.profile.telegram_chat_id)
+          if (json.profile.email_notif)      setEmailNotif(json.profile.email_notif)
+        }
+      })
+      .catch(() => {})
   }, [])
 
   async function handleSaveGeneral() {
@@ -262,13 +270,5 @@ function SettingsContent() {
 
       </div>
     </div>
-  )
-}
-
-export default function SettingsPage() {
-  return (
-    <SessionProvider>
-      <SettingsContent />
-    </SessionProvider>
   )
 }
