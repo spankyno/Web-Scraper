@@ -3,7 +3,6 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 
 const inputStyle: React.CSSProperties = {
   width: '100%', background: '#0d0f14',
@@ -36,19 +35,30 @@ function LoginForm() {
     setLoading(true)
     setError('')
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    // Llamar al Route Handler del servidor para que las cookies
+    // queden seteadas correctamente (httpOnly) y el middleware las lea.
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+
     setLoading(false)
 
-    if (authError) {
-      if (authError.message.toLowerCase().includes('email not confirmed')) {
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      if (json.error === 'EMAIL_NOT_VERIFIED') {
         setError('Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
       } else {
-        setError('Email o contraseña incorrectos')
+        setError(json.error ?? 'Email o contraseña incorrectos')
       }
-    } else {
-      const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
-      router.push(callbackUrl)
+      return
     }
+
+    // Login correcto — redirigir
+    const callbackUrl = searchParams.get('callbackUrl') ?? '/dashboard'
+    router.push(callbackUrl)
+    router.refresh()
   }
 
   return (
@@ -69,8 +79,16 @@ function LoginForm() {
 
         <div style={{ background: '#1e2330', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '24px' }}>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input style={inputStyle} type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" required autoComplete="email" />
-            <input style={inputStyle} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" required autoComplete="current-password" />
+            <input
+              style={inputStyle} type="email" value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="tu@email.com" required autoComplete="email"
+            />
+            <input
+              style={inputStyle} type="password" value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Contraseña" required autoComplete="current-password"
+            />
 
             <div style={{ textAlign: 'right', marginTop: -4 }}>
               <a href="/forgot-password" style={{ fontSize: 12, color: '#555c6e', textDecoration: 'none' }}>
@@ -84,12 +102,15 @@ function LoginForm() {
               </div>
             )}
 
-            <button type="submit" disabled={loading} style={{
-              padding: '11px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: '#00d4aa', color: '#000', border: 'none',
-              cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
-              fontFamily: 'inherit', marginTop: 4,
-            }}>
+            <button
+              type="submit" disabled={loading}
+              style={{
+                padding: '11px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: '#00d4aa', color: '#000', border: 'none',
+                cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.7 : 1,
+                fontFamily: 'inherit', marginTop: 4,
+              }}
+            >
               {loading ? 'Iniciando…' : 'Iniciar sesión'}
             </button>
           </form>
